@@ -150,7 +150,7 @@ WITH clean_data AS (
         order_id,
 
 
-        -- cleaned name (same logic as before, as expressions)
+        -- cleaned name
         CASE
             WHEN customer_name IS NULL THEN NULL
             WHEN INSTR(customer_name, ' ') = 0 THEN
@@ -184,7 +184,16 @@ WITH clean_data AS (
 
         -- cleaned price
         CAST(REPLACE(REPLACE(price, '$', ''), ',', '') AS REAL) AS cleaned_price,
-        country,
+        
+        -- cleaned country
+        CASE 
+        WHEN LOWER(country) = 'usa' OR LOWER(country) = 'us' OR LOWER(country) = 'united states' THEN 'United States'
+        WHEN LOWER(country) = 'uk' OR LOWER(country) = 'united kingdom' THEN 'United Kingdom'
+        WHEN LOWER(country) = 'india' THEN 'India'
+        WHEN LOWER(country) = 'spain' THEN 'Spain'
+        WHEN LOWER(country) = 'canada' THEN 'Canada'
+        ELSE country
+    END AS cleaned_country,
 
         -- cleaned order status
         CASE
@@ -198,7 +207,18 @@ WITH clean_data AS (
 
         notes
     FROM customer_orders
+),
+
+dupe_data AS (
+    SELECT
+    *,
+    ROW_NUMBER() OVER(
+        PARTITION BY LOWER(email), LOWER(product_name)
+        ORDER BY order_id) AS dupe
+    FROM customer_orders
 )
+
 SELECT
     *
-FROM clean_data;
+FROM dupe_data
+WHERE dupe = 1;
