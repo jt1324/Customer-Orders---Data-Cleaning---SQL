@@ -50,12 +50,18 @@ SELECT
     DISTINCT quantity
 FROM customer_orders;
 
+WITH qty_clean AS (
+    SELECT
+        quantity,
+        CASE
+            WHEN quantity = 'two' THEN 2
+            ELSE CAST(quantity AS INT)
+        END AS cleaned_quantity
+    FROM customer_orders)
 SELECT
     quantity,
-    CASE
-        WHEN quantity = 'two' THEN 2
-        ELSE quantity
-    END AS cleaned_quantity
-FROM customer_orders;
+    cleaned_quantity,
+    typeof(cleaned_quantity) AS cleaned_qty_type
+FROM qty_clean;
 
 
