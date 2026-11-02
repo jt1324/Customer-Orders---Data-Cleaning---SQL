@@ -65,3 +65,26 @@ SELECT
 FROM qty_clean;
 
 
+-- *********************** Clean costumer_name column ***************************
+
+SELECT
+    DISTINCT customer_name
+FROM customer_orders;
+
+WITH cap_name AS (
+    WITH split_name AS (
+        SELECT
+            customer_name,
+            SUBSTR(customer_name, 1, INSTR(customer_name, ' ') -1) AS first_name,
+            SUBSTR(customer_name, INSTR(customer_name, ' ') +1) AS last_name
+        FROM customer_orders
+        WHERE customer_name IS NOT NULL)
+    SELECT
+        UPPER(SUBSTR(first_name, 1, 1)) || LOWER(SUBSTR(first_name, 2)) AS cap_f_name,
+        UPPER(SUBSTR(last_name, 1, 1)) || LOWER(SUBSTR(last_name, 2)) AS cap_l_name
+    FROM split_name)
+SELECT
+    TRIM(COALESCE(cap_f_name, '') || ' ' || COALESCE(cap_l_name, '')) AS full_name
+FROM cap_name;    
+
+
