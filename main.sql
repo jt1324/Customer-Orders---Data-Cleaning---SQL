@@ -86,8 +86,16 @@ WITH cap_name AS (
     FROM split_name)
 SELECT
     customer_name,
-    TRIM(COALESCE(cap_f_name, '') || ' ' || COALESCE(cap_l_name, '')) AS full_name
+    TRIM(COALESCE(cap_f_name, '') || ' ' || COALESCE(cap_l_name, '')) AS cleaned_customer_name
 FROM cap_name;    
+
+
+-- *********************** Clean price column ***************************
+
+SELECT
+    price,
+    CAST(REPLACE(REPLACE(price, '$', ''), ',', '') AS REAL) AS cleaned_price
+FROM customer_orders;
 
 
 -- *********************** Checking for duplicate orders and remove if exixtent ***************************
@@ -118,3 +126,62 @@ SELECT
     *
 FROM dupe_check
 WHERE dupe = 1;
+
+
+-- *********************** Final clean data ***************************
+
+WITH clean_data AS (
+    SELECT
+        order_id,
+
+        -- cleaned name (same logic as before, as expressions)
+        CASE
+            WHEN customer_name IS NULL THEN NULL
+            WHEN INSTR(customer_name, ' ') = 0 THEN
+                UPPER(SUBSTR(customer_name, 1, 1)) || LOWER(SUBSTR(customer_name, 2))
+            ELSE
+                UPPER(SUBSTR(customer_name, 1, 1))
+                || LOWER(SUBSTR(customer_name, 2, INSTR(customer_name, ' ') - 2))
+                || ' '
+                || UPPER(SUBSTR(customer_name, INSTR(customer_name, ' ') + 1, 1))
+                || LOWER(SUBSTR(customer_name, INSTR(customer_name, ' ') + 2))
+        END AS cleaned_customer_name,
+
+        email,
+        order_date,
+
+        -- cleaned product name
+        CASE
+            WHEN LOWER(product_name) LIKE '%apple watch%' THEN 'Apple Watch'
+            WHEN LOWER(product_name) LIKE '%samsung galaxy s22%' THEN 'Samsung Galaxy S22'
+            WHEN LOWER(product_name) LIKE '%google pixel%' THEN 'Google Pixel'
+            WHEN LOWER(product_name) LIKE '%iphone 14%' THEN 'Iphone 14'
+            WHEN LOWER(product_name) LIKE '%macbook pro%' THEN 'MacBook Pro'
+            ELSE 'Other'
+        END AS cleaned_product_name,
+
+        -- cleaned qty
+        CASE
+            WHEN quantity = 'two' THEN 2
+            ELSE CAST(quantity AS INT)
+        END AS cleaned_quantity,
+
+        price,
+        country,
+
+        -- cleaned order status
+        CASE
+            WHEN LOWER(order_status) LIKE '%deliver%' THEN 'Delivered'
+            WHEN LOWER(order_status) LIKE '%return%' THEN 'Returned'
+            WHEN LOWER(order_status) LIKE '%shipped%' THEN 'Shipped'
+            WHEN LOWER(order_status) LIKE '%pending%' THEN 'Pending'
+            WHEN LOWER(order_status) LIKE '%refund%' THEN 'Refunded'
+            ELSE 'Other'
+        END AS cleaned_order_status,
+
+        notes
+    FROM customer_orders
+)
+SELECT
+    *
+FROM clean_data;
