@@ -205,20 +205,24 @@ WITH clean_data AS (
             ELSE 'Other'
         END AS cleaned_order_status,
 
-        notes
-    FROM customer_orders
-),
+        notes,
 
-dupe_data AS (
-    SELECT
-    *,
-    ROW_NUMBER() OVER(
+        ROW_NUMBER() OVER(
         PARTITION BY LOWER(email), LOWER(product_name)
         ORDER BY order_id) AS dupe
     FROM customer_orders
 )
 
 SELECT
-    *
-FROM dupe_data
+    order_id,
+    cleaned_customer_name,
+    email,
+    order_date,
+    cleaned_product_name,
+    cleaned_quantity,
+    cleaned_price,
+    cleaned_country,
+    cleaned_order_status,
+    notes
+FROM clean_data
 WHERE dupe = 1;
