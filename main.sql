@@ -98,6 +98,21 @@ SELECT
 FROM customer_orders;
 
 
+-- *********************** Clean country column ***************************
+
+SELECT
+    country,
+    CASE 
+        WHEN LOWER(country) = 'usa' OR LOWER(country) = 'us' OR LOWER(country) = 'united states' THEN 'United States'
+        WHEN LOWER(country) = 'uk' OR LOWER(country) = 'united kingdom' THEN 'United Kingdom'
+        WHEN LOWER(country) = 'india' THEN 'India'
+        WHEN LOWER(country) = 'spain' THEN 'Spain'
+        WHEN LOWER(country) = 'canada' THEN 'Canada'
+        ELSE country
+    END AS cleaned_country
+FROM customer_orders;
+
+
 -- *********************** Checking for duplicate orders and remove if exixtent ***************************
 
 SELECT
@@ -134,6 +149,7 @@ WITH clean_data AS (
     SELECT
         order_id,
 
+
         -- cleaned name (same logic as before, as expressions)
         CASE
             WHEN customer_name IS NULL THEN NULL
@@ -166,7 +182,8 @@ WITH clean_data AS (
             ELSE CAST(quantity AS INT)
         END AS cleaned_quantity,
 
-        price,
+        -- cleaned price
+        CAST(REPLACE(REPLACE(price, '$', ''), ',', '') AS REAL) AS cleaned_price,
         country,
 
         -- cleaned order status
