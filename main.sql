@@ -80,11 +80,41 @@ WITH cap_name AS (
         FROM customer_orders
         WHERE customer_name IS NOT NULL)
     SELECT
+        customer_name,
         UPPER(SUBSTR(first_name, 1, 1)) || LOWER(SUBSTR(first_name, 2)) AS cap_f_name,
         UPPER(SUBSTR(last_name, 1, 1)) || LOWER(SUBSTR(last_name, 2)) AS cap_l_name
     FROM split_name)
 SELECT
+    customer_name,
     TRIM(COALESCE(cap_f_name, '') || ' ' || COALESCE(cap_l_name, '')) AS full_name
 FROM cap_name;    
 
 
+-- *********************** Checking for duplicate orders and remove if exixtent ***************************
+
+SELECT
+    COUNT(*) AS qty,
+    order_id
+FROM customer_orders
+GROUP BY order_id;
+
+
+SELECT
+    COUNT(order_id) AS qty,
+    LOWER(email),
+    LOWER(product_name)
+FROM customer_orders
+GROUP BY 2, 3
+ORDER BY 2;
+
+WITH dupe_check AS (
+SELECT
+    *,
+    ROW_NUMBER() OVER(
+        PARTITION BY LOWER(email), LOWER(product_name)
+        ORDER BY order_id) AS dupe
+FROM customer_orders)
+SELECT 
+    *
+FROM dupe_check
+WHERE dupe = 1;
