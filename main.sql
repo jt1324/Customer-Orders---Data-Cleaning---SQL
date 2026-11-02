@@ -44,5 +44,18 @@ SELECT
 FROM customer_orders;
 
 
+-- *********************** Clean quantity column ***************************
+
+SELECT
+    DISTINCT quantity
+FROM customer_orders;
+
+SELECT
+    quantity,
+    CASE
+        WHEN quantity = 'two' THEN 2
+        ELSE quantity
+    END AS cleaned_quantity
+FROM customer_orders;
 
 
